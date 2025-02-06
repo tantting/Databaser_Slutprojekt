@@ -1,4 +1,5 @@
 using Databaser_Slutprojekt.Menus;
+using Microsoft.Data.SqlClient;
 
 namespace Databaser_Slutprojekt.Other;
 
@@ -26,6 +27,7 @@ public class MonsterHigh
     /// <returns>true om login succeeds</returns>
     public bool Login()
     {
+        Console.Clear();
         Console.WriteLine("Det är nu som du loggar in men jag hann inte dit om du ser detta. Så inloggningen" +
                           "lyckades mao och du har access till ALLT! Grattis :)\n" +
                           "\n" +

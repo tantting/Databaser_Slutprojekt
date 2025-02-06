@@ -1,9 +1,13 @@
-﻿namespace Databaser_Slutprojekt;
+﻿using Databaser_Slutprojekt.Menus;
+using Databaser_Slutprojekt.Other;
+
+namespace Databaser_Slutprojekt;
 
 class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine("Hello, World!");
+        var monsterHigh = new MonsterHigh(); 
+        monsterHigh.Run();
     }
 }

@@ -4,7 +4,6 @@ public class AdminMenu
 {
     public void Run()
     {
-        string[] menuItems = { " ", " " };
-        var menuBuilder = new Menubuilder(menuItems, "What would you like to do?");
+        Console.WriteLine("Run Admin-meny");
     }
 }

@@ -22,11 +22,10 @@ public class Menu
         while (runMenu)
         {
             var menuKeys = new List<string>(menuItems.Keys);
-            var fuldata = new string[] {"", ""};
-            var menu = new Menubuilder(fuldata, "What would you like to access?");
+            var menu = new Menubuilder(menuKeys, "What would you like to access?");
             
             //The EndProgram-method returns false, all other true. d
-            runMenu = menuItems[menu.Run2(menuKeys)](); 
+            runMenu = menuItems[menu.Run()](); 
 
             // int choice = menu.Run();
             //
@@ -63,94 +62,97 @@ public class Menu
     
     public bool StaffInfoMenu()
     {
-        bool runmenu = true;
-
-        while (runmenu)
-        {
-            string[] menuItems = { "Departments", "Staff", "Return to start menu" };
-            var menu = new Menubuilder(menuItems, "What would you like to see?");
-
-            int choice = menu.Run();
-            
-            Console.Clear();
-            
-            switch(choice)
-            {
-                case 0:
-                    Console.WriteLine("See departments and klick on department to se all staff in department");
-                    break; 
-                case 1:
-                    Console.WriteLine("See all staff, sort on first, last name or role, asc or desc");
-                    break;
-                case 2:
-                    Console.WriteLine("See all staff, sort on first, last name or role, asc or desc");
-                    break;
-            }
-            Console.WriteLine("\nPress enter to continue");
-            while (Console.ReadKey(true).Key != ConsoleKey.Enter){}
-        }
+        Console.WriteLine("StaffInfoMenu");
+        // bool runmenu = true;
+        //
+        // while (runmenu)
+        // {
+            // string[] menuItems = { "Departments", "Staff", "Return to start menu" };
+            // var menu = new Menubuilder(menuItems, "What would you like to see?");
+            //
+            // int choice = menu.Run();
+            //
+            // Console.Clear();
+            //
+            // switch(choice)
+            // {
+            //     case 0:
+            //         Console.WriteLine("See departments and klick on department to se all staff in department");
+            //         break; 
+            //     case 1:
+            //         Console.WriteLine("See all staff, sort on first, last name or role, asc or desc");
+            //         break;
+            //     case 2:
+            //         Console.WriteLine("See all staff, sort on first, last name or role, asc or desc");
+            //         break;
+            // }
+            // Console.WriteLine("\nPress enter to continue");
+            // while (Console.ReadKey(true).Key != ConsoleKey.Enter){}
+        // }
         return true;
     }
 
     public bool ClassesStudents()
     {
-        bool runmenu = true;
-
-        while (runmenu)
-        {
-            string[] menuItems = { "Departments", "Staff", "Return to start menu" };
-            var menu = new Menubuilder(menuItems, "What would you like to see?");
-
-            int choice = menu.Run();
-            
-            Console.Clear();
-            
-            switch(choice)
-            {
-                case 0:
-                    Console.WriteLine("See departments and klick on department to se all staff in department");
-                    break; 
-                case 1:
-                    Console.WriteLine("See all staff, sort on first, last name or role, asc or desc");
-                    break;
-                case 2:
-                    Console.WriteLine("See all staff, sort on first, last name or role, asc or desc");
-                    break;
-            }
-            Console.WriteLine("\nPress enter to continue");
-            while (Console.ReadKey(true).Key != ConsoleKey.Enter){}
-        }
+        Console.WriteLine("StaffInfoMenu");
+        // bool runmenu = true;
+        //
+        // while (runmenu)
+        // {
+            // string[] menuItems = { "Departments", "Staff", "Return to start menu" };
+            // var menu = new Menubuilder(menuItems, "What would you like to see?");
+            //
+            // int choice = menu.Run();
+            //
+            // Console.Clear();
+            //
+            // switch(choice)
+            // {
+            //     case 0:
+            //         Console.WriteLine("See departments and klick on department to se all staff in department");
+            //         break; 
+            //     case 1:
+            //         Console.WriteLine("See all staff, sort on first, last name or role, asc or desc");
+            //         break;
+            //     case 2:
+            //         Console.WriteLine("See all staff, sort on first, last name or role, asc or desc");
+            //         break;
+            // }
+        //     Console.WriteLine("\nPress enter to continue");
+        //     while (Console.ReadKey(true).Key != ConsoleKey.Enter){}
+        // }
         return true;
     }
 
     public bool Economy()
     {
-        bool runmenu = true;
-
-        while (runmenu)
-        {
-            string[] menuItems = { "Departments", "Staff", "Return to start menu" };
-            var menu = new Menubuilder(menuItems, "What would you like to see?");
-
-            int choice = menu.Run();
-            
-            Console.Clear();
-            
-            switch(choice)
-            {
-                case 0:
-                    Console.WriteLine("See departments and klick on department to se all staff in department");
-                    break; 
-                case 1:
-                    Console.WriteLine("See all staff, sort on first, last name or role, asc or desc");
-                    break;
-                case 2:
-                    Console.WriteLine("See all staff, sort on first, last name or role, asc or desc");
-                    break;
-            }
-            Console.WriteLine("\nPress enter to continue");
-            while (Console.ReadKey(true).Key != ConsoleKey.Enter){}
-        }
+        Console.WriteLine("Economy");
+        // bool runmenu = true;
+        //
+        // while (runmenu)
+        // {
+            // string[] menuItems = { "Departments", "Staff", "Return to start menu" };
+            // var menu = new Menubuilder(menuItems, "What would you like to see?");
+            //
+            // int choice = menu.Run();
+            //
+            // Console.Clear();
+            //
+            // switch(choice)
+            // {
+            //     case 0:
+            //         Console.WriteLine("See departments and klick on department to se all staff in department");
+            //         break; 
+            //     case 1:
+            //         Console.WriteLine("See all staff, sort on first, last name or role, asc or desc");
+            //         break;
+            //     case 2:
+            //         Console.WriteLine("See all staff, sort on first, last name or role, asc or desc");
+            //         break;
+            // }
+        //     Console.WriteLine("\nPress enter to continue");
+        //     while (Console.ReadKey(true).Key != ConsoleKey.Enter){}
+        // }
         return true;
     }
 

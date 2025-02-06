@@ -4,51 +4,64 @@ namespace Databaser_Slutprojekt.Menus;
 
 public class Menu
 {
+    private delegate bool _menuAction();
     
     public void Run()
     {
+        var menuItems= new Dictionary<string, _menuAction>
+        {
+            { "Departments and staff", StaffInfoMenu },
+            { "Classes and Students", ClassesStudents },
+            { "Economy", Economy },
+            { "Admin", RunAdmin },
+            { "End program", EndProgram }
+        };
+        
         bool runMenu = true;
 
-        while (true)
+        while (runMenu)
         {
-            string[] menuItems = { "Departments and staff", "Classes and Students", "Economy", "Admin", "End program" };
+            var menuKeys = new List<string>(menuItems.Keys);
+            var fuldata = new string[] {"", ""};
+            var menu = new Menubuilder(fuldata, "What would you like to access?");
+            
+            //The EndProgram-method returns false, all other true. d
+            runMenu = menuItems[menu.Run2(menuKeys)](); 
 
-            var menu = new Menubuilder(menuItems, "What would you like to access?");
-
-            int choice = menu.Run();
-
-            switch (choice)
-            {
-                case 0:
-                    StaffInfoMenu();
-                    break;
-                case 1:
-                    Console.WriteLine("Classes and Students");
-
-                    break;
-                case 2:
-                    Console.WriteLine("Economy");
-
-                    break;
-                case 3:
-                    Console.WriteLine("Admin");
-                    var adminMenu = new AdminMenu();
-                    adminMenu.Run();
-                    break;
-                case 4:
-                    Console.WriteLine("End program");
-                    runMenu = false;
-                    Console.ReadKey();
-                    Console.WriteLine("Have a nice day!");
-                    break;
-            }
+            // int choice = menu.Run();
+            //
+            // switch (choice)
+            // {
+            //     case 0:
+            //         StaffInfoMenu();
+            //         break;
+            //     case 1:
+            //         Console.WriteLine("Classes and Students");
+            //
+            //         break;
+            //     case 2:
+            //         Console.WriteLine("Economy");
+            //
+            //         break;
+            //     case 3:
+            //         Console.WriteLine("Admin");
+            //         var adminMenu = new AdminMenu();
+            //         adminMenu.Run();
+            //         break;
+            //     case 4:
+            //         Console.WriteLine("End program");
+            //         runMenu = false;
+            //         Console.ReadKey();
+            //         Console.WriteLine("Have a nice day!");
+            //         break;
+            // }
 
             Console.WriteLine("\nPress enter to continue");
             while (Console.ReadKey(true).Key != ConsoleKey.Enter){}
         }
     }
     
-    public void StaffInfoMenu()
+    public bool StaffInfoMenu()
     {
         bool runmenu = true;
 
@@ -76,9 +89,10 @@ public class Menu
             Console.WriteLine("\nPress enter to continue");
             while (Console.ReadKey(true).Key != ConsoleKey.Enter){}
         }
+        return true;
     }
 
-    public void ClassesStudents()
+    public bool ClassesStudents()
     {
         bool runmenu = true;
 
@@ -106,9 +120,10 @@ public class Menu
             Console.WriteLine("\nPress enter to continue");
             while (Console.ReadKey(true).Key != ConsoleKey.Enter){}
         }
+        return true;
     }
 
-    public void Economy()
+    public bool Economy()
     {
         bool runmenu = true;
 
@@ -136,6 +151,24 @@ public class Menu
             Console.WriteLine("\nPress enter to continue");
             while (Console.ReadKey(true).Key != ConsoleKey.Enter){}
         }
+        return true;
+    }
+
+    public bool RunAdmin()
+    {
+        var adminMenu = new AdminMenu(); 
+        adminMenu.Run();
+        return true;
+    }
+
+    public bool EndProgram()
+    {
+        Console.Clear();
+        Console.WriteLine("You have chosen to exit the program!\n" +
+                          "\n" +
+                          "Have a nice day!\n");
+
+        return false;
     }
 
 }

@@ -159,8 +159,7 @@ public class Menu
     {
         var menuItems= new Dictionary<string, _menuAction>
         {
-            { "Yearly salary expenditures", _adoServices.ShowSalaryTotalYear },
-            { "Average salary for all staff", _adoServices.ShowAvgSalaryTotal },
+            { "Monthly salary cost per department", _adoServices.ShowMonthlySalaryCostDepartment },
             { "Average salary per department", _adoServices.ShowAvgSalaryPerDepartment },
             { "Return to start menu", EndMenuLoop },
         };

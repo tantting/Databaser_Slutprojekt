@@ -117,8 +117,6 @@ public class ADOServices
                        "'Position/Role',\nDATEDIFF(YEAR, DateHired, GETDATE()) AS 'YearsEmployed'\nFROM Staff s\nJOIN " +
                        "StaffRoles r ON s.StaffRoleID = r.ID\nORDER BY 'Last name'";
         
-        //var headings = new List<string>() { "Last name", "First name", "Position", "Years at School" };
-        
         ExecuteShowQueries(query, 20, null);
 
         return true;
@@ -173,32 +171,34 @@ public class ADOServices
         return true;
     }
     
-    
-    public bool ShowSalaryTotalYear()
+    public bool ShowMonthlySalaryCostDepartment()
     {
         Console.Clear();
-        Console.WriteLine("TOTAL SALARY COST PER DEPARTMENT\n");
+        Console.WriteLine("MONTHLY SALARY COST PER DEPARTMENT\n");
 
-        string query = @"SELECT d.DepartmentName AS 'Department name', SUM(s.SalaryMonthly) AS 'Total monthly salary cost' "+
-                       "FROM Departments d JOIN DepartmentsStaff ds ON d.ID = ds.DepartmentID "+
+        string query = @"SELECT d.DepartmentName AS 'Department name', 
+                        SUM(s.SalaryMonthly) AS 'Total monthly salary cost' "+
+                       "FROM Departments d "+
+                       "JOIN DepartmentsStaff ds ON d.ID = ds.DepartmentID "+
                        "JOIN Staff s ON s.ID = ds.StaffID GROUP BY d.DepartmentName";
         
+        ExecuteShowQueries(query, 40, null);
         
-        return true;
-    }
-    
-    public bool ShowAvgSalaryTotal()
-    {
-        Console.Clear();
-        Console.WriteLine("Avg salar of all staff ");
-
         return true;
     }
     
     public bool ShowAvgSalaryPerDepartment()
     {
         Console.Clear();
-        Console.WriteLine("Avg salar per department");
+        Console.WriteLine("AVERAGE SALARY PER DEPARTMENT\n");
+        
+        string query = @"SELECT d.DepartmentName AS 'Department name', 
+                        AVG(s.SalaryMonthly) AS 'Average monthly salary' "+
+                       "FROM Departments d "+
+                       "JOIN DepartmentsStaff ds ON d.ID = ds.DepartmentID "+
+                       "JOIN Staff s ON s.ID = ds.StaffID GROUP BY d.DepartmentName";
+        
+        ExecuteShowQueries(query, 40, null);
 
         return true;
     }

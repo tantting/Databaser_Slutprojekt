@@ -204,7 +204,7 @@ public class ADOServices
         return true;
     }
 
-    public List<string[]> ShowAllStaffRoles()
+    public List<string[]> GetMenuData()
     {
         var staffRoles = new List<string[]> ();
         
@@ -241,10 +241,10 @@ public class ADOServices
         return staffRoles;
     }
 
-    public int FetchRoleID(string firstName, string lastName)
+    public int FetchID(string firstName, string lastName)
     {
         //Get a List of string-arrays containing staff-roles and their ID
-        var staffRoles = ShowAllStaffRoles();
+        var staffRoles = GetMenuData();
 
         List<string> menuItems = new List<string>(); 
         
@@ -339,6 +339,11 @@ public class ADOServices
             }
         }
         return monthlySalary;
+    }
+
+    public decimal GetStudentID()
+    {
+        
     }
 
     /// <summary>

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq.Expressions;
 using Databaser_Slutprojekt.Menus;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -13,42 +14,56 @@ public class ADOServices
     private readonly string _connectionString =
         @"Server=localhost,1433;Database=MonsterHighDB; User = SA; Password = MyStrongPass123; Trust Server Certificate = true";
     
-   
-    //const string format = "{0,-15} {1,-15} {2,-15} {3,-15} {4, -20}";
-    private void ExcecuteQueries(string query, int padding, List<string> headings)
+    
+    private void ExecuteShowQueries(string query, int padding, int? parameter)
     {
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
             connection.Open();
 
-            SqlCommand command = new SqlCommand(query, connection);
-
-            try
+            using (SqlCommand command = new SqlCommand(query, connection))
             {
-                using (SqlDataReader reader = command.ExecuteReader())
+                //if there is a parameter to handle in the method call
+                if (parameter.HasValue)
                 {
-                    for (int i = 0; i < headings.Count; i++)
-                    {
-                        Console.Write(headings[i].PadRight(padding));
-                    }
-                    Console.WriteLine();
-                    Console.WriteLine("---------------------------------------------------------------------------");
-                    
-                    while (reader.Read())
-                    {
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            Console.Write(reader[i].ToString().PadRight(padding));
-                        }
-                        Console.WriteLine();
-                    }
+                    // Add the parameter with entered value
+                    command.Parameters.AddWithValue("@parameter", parameter);
                 }
 
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
+                try
+                {
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        if (reader.HasRows)
+                        {
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                Console.Write(reader.GetName(i).PadRight(padding));
+                            }
+
+                            Console.WriteLine();
+                            Console.WriteLine(
+                                "---------------------------------------------------------------------------");
+
+                            while (reader.Read())
+                            {
+                                for (int i = 0; i < reader.FieldCount; i++)
+                                {
+                                    Console.Write(reader[i].ToString().PadRight(padding));
+                                }
+                                Console.WriteLine();
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("There are no data matching he request");
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
             }
         }
     }
@@ -83,8 +98,6 @@ public class ADOServices
         finally
         {
             Console.WriteLine("Operation completed.");
-            Console.WriteLine("\nPress enter to continue");
-            while (Console.ReadKey(true).Key != ConsoleKey.Enter) {}
         }
     }
 
@@ -104,9 +117,9 @@ public class ADOServices
                        "'Position/Role',\nDATEDIFF(YEAR, DateHired, GETDATE()) AS 'YearsEmployed'\nFROM Staff s\nJOIN " +
                        "StaffRoles r ON s.StaffRoleID = r.ID\nORDER BY 'Last name'";
         
-        var headings = new List<string>() { "Last name", "First name", "Position", "Years at School" };
+        //var headings = new List<string>() { "Last name", "First name", "Position", "Years at School" };
         
-        ExcecuteQueries(query, 20, headings);
+        ExecuteShowQueries(query, 20, null);
 
         return true;
     }
@@ -125,42 +138,10 @@ public class ADOServices
         if (studentID != -1)
         {
             Console.Clear();
-                using (SqlConnection connection = new SqlConnection(_connectionString))
-                {
-                    connection.Open();
-                    //kallar på en stored procedure med ID som in-parameter
-                    string query = @"EXEC ShowStudent @ID";
-
-                    using (SqlCommand command = new SqlCommand(query, connection))
-                    {
-                        //add the parameter ID
-                        command.Parameters.AddWithValue("@ID", studentID);
-
-                        try
-                        {
-                            using (SqlDataReader reader = command.ExecuteReader())
-                            {
-                                Console.WriteLine($"Name".PadRight(20) + "Personal number".PadRight(20) + 
-                                                  "Grade".PadRight(20) + "Mentor".PadRight(20));
-                                Console.WriteLine("---------------------------------------------------------------------------");
-                                while (reader.Read())
-                                {
-                                    for (int i = 0; i < reader.FieldCount; i++)
-                                    {
-                                        Console.Write(reader[i].ToString().PadRight(20));
-                                    }
-
-                                    Console.WriteLine();
-                                }
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine(e);
-                            throw;
-                        }
-                    }
-                }
+            string query = @"EXEC ShowStudent @parameter";
+            //List<string> headings = new List<string>() { "Name", "Personal number", "Grade", "Mentor" };
+            
+            ExecuteShowQueries(query, 20, studentID);
         }
         return true;
     } 
@@ -182,10 +163,12 @@ public class ADOServices
             string query = @"SELECT c.CourseName as 'Course',g2.GradingScale as 'Grade',g1.DateSetGrade as 'Date when set',"+
                            "s1.FirstName + ' ' + s1.LastName as 'Teacher'FROM Grades g1 JOIN Courses c ON g1.CourseID = c.ID "+
                            "JOIN CourseTeacher ct on ct.CourseID = c.ID JOIN Staff s1 ON ct.TeacherID = s1.ID "+
-                           "JOIN GradingScales g2 ON g1.GradingScale_ID = g2.ID JOIN Students s2 ON s2.ID = g1.StudentID"+
-                           "WHERE s2.ID = @ID";
+                           "JOIN GradingScales g2 ON g1.GradingScale_ID = g2.ID JOIN Students s2 ON s2.ID = g1.StudentID "+
+                           "WHERE s2.ID = @parameter";
+
+            //var headings = new List<string>() { "Course", "Grade", "Date when set", "Teacher" };
             
-            
+            ExecuteShowQueries(query, 20, studentID);
         }
         return true;
     }
@@ -194,8 +177,13 @@ public class ADOServices
     public bool ShowSalaryTotalYear()
     {
         Console.Clear();
-        Console.WriteLine("Total salary cost ");
+        Console.WriteLine("TOTAL SALARY COST PER DEPARTMENT\n");
 
+        string query = @"SELECT d.DepartmentName AS 'Department name', SUM(s.SalaryMonthly) AS 'Total monthly salary cost' "+
+                       "FROM Departments d JOIN DepartmentsStaff ds ON d.ID = ds.DepartmentID "+
+                       "JOIN Staff s ON s.ID = ds.StaffID GROUP BY d.DepartmentName";
+        
+        
         return true;
     }
     
@@ -238,8 +226,9 @@ public class ADOServices
     {
         Console.Clear();
         Console.WriteLine("Add new staff");
+        Console.WriteLine("--------------------------------");
 
-        Console.WriteLine("Please enter the following data:");
+        Console.WriteLine("\nPlease enter the following data:\n");
 
         Console.Write("First name: ");
         string firstName = Console.ReadLine();
@@ -421,16 +410,16 @@ public class ADOServices
                 List<string> menuItems = new List<string>();
 
                 //Pick the role-names from the list of arrays to use for a menu.
-                    for (int i = 0; i < filteredStudents.Count; i++)
+                for (int i = 0; i < filteredStudents.Count; i++)
+                {
+                    string studentItem = "";
+                    for (int j = 0; j < filteredStudents[i].Count; j++)
                     {
-                        string studentItem = "";
-                        for (int j = 0; j < filteredStudents[i].Count; j++)
-                        {
-                            studentItem = studentItem + "  " + filteredStudents[i][j];
-                        }
-
-                        menuItems.Add(studentItem);
+                        studentItem = studentItem + "  " + filteredStudents[i][j];
                     }
+
+                    menuItems.Add(studentItem);
+                }
 
                 if (menuItems.Count != 0)
                 {

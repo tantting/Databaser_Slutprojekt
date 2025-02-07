@@ -47,7 +47,7 @@ public class Menu
              {
                  { "All departments", _efServices.ShowDepartments },
                  { "All Staff", _adoServices.ShowStaff },
-                 { "Add Staff (Admin)", _adoServices.ShowStaff },
+                 { "Add Staff (Admin)", _adoServices.AddNewStaff },
                  { "Return to start menu", EndMenuLoop },
              };
              

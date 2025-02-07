@@ -132,7 +132,7 @@ public class Menu
     {
         var menuItems= new Dictionary<string, _menuAction>
         {
-            { "See grades of specific Student", _efServices.ShowAllActiveCourses },
+            { "See grades of specific Student", _adoServices.ShowGradesPerStudent },
             { "Set course grades", _adoServices.SetCourseGrades},
             { "Return to start menu", EndMenuLoop },
         };

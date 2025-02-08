@@ -207,8 +207,77 @@ public class ADOServices
     public bool SetCourseGrades()
     {
         Console.Clear();
-        Console.WriteLine("set student grades");
+        Console.WriteLine("SET COURSE GRADES\n");
+    
+        //Start by fetching the ID of the teacher setting the grades
+        string queryTeacherID = @"SELECT ID AS 'ID', FirstName + ' ' + LastName AS Name FROM Staff";
+        string headingTeacherID = "Which teacher is setting the grade?\n";
+        int gradeSetTeacherID = FetchColumnID(queryTeacherID, headingTeacherID);
+    
+        //Fetch student ID
+        int studentID = FetchStudentID();
+    
+        //Fetch course ID
+        string queryCourseID = @"SELECT ID AS 'ID',CourseName AS Course FROM Courses";
+        string headingCourseID = "Choose relevant course: \n";
+        int courseID = FetchColumnID(queryCourseID, headingCourseID);
+    
+        //Fetch gradingScaleID
+        string queryGradeScaleID =  @"SELECT ID AS 'ID',GradingScale AS Grade FROM GradingScales";
+        string headingGradeScaleID = "Choose relevant grade: \n";
+        int gradingScaleID = FetchColumnID(queryGradeScaleID, headingGradeScaleID);
+    
+        var menuItems = new List<string>() {"Yes", "No"};
+        var menu = new Menubuilder(menuItems, "Is this a fina/n Answer Yes is final, No if intermediate");
+        
+        string choice = menu.Run();
+    
+        //finalGRades = treu is equal to 1 on bit
+        bool finalGrades = true;
+    
+        if (choice == "Yes")
+        {
+            finalGrades = true; 
+        }
+        else
+        {
+            finalGrades = false; 
+        }
 
+        Console.WriteLine($"Student = {studentID} Teacher {gradeSetTeacherID} Course= {courseID} grade= {gradingScaleID} final= {finalGrades}");
+        Console.ReadLine();
+    
+        string mainQuery = $@"EXEC SetGrades @StudentID, @GradeSetTeacherID, "+
+                           $"@CourseID, @GradingScaleID, @FinalGrades";
+        try
+        {
+            Console.Clear();
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+    
+                using (SqlCommand command = new SqlCommand(mainQuery, connection))
+                {
+                    command.Parameters.AddWithValue("@StudentID", studentID);
+                    command.Parameters.AddWithValue("@GradeSetTeacherID", gradeSetTeacherID);
+                    command.Parameters.AddWithValue("@CourseID", courseID);
+                    command.Parameters.AddWithValue("@GradingScaleID", gradingScaleID);
+                    command.Parameters.AddWithValue("@FinalGrades", finalGrades); 
+
+                    var rowsAffected = command.ExecuteNonQuery();
+                    Console.WriteLine($"{rowsAffected} grade is now changed");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        finally
+        {
+            Console.WriteLine("Operation completed.");
+        }
         return true;
     }
     
@@ -236,14 +305,15 @@ public class ADOServices
         Console.Write("Last name: ");
         string lastName = Console.ReadLine();
 
-        int staffRoleId = FetchStaffRoleID(firstName, lastName);
+        string getIDquery = @"SELECT * FROM StaffRoles";
+        string topStatementMenu = $"What position will {firstName} {lastName} have?";
+            
+        int staffRoleId = FetchColumnID(getIDquery, topStatementMenu);
 
         DateTime startDate = GetStartDate(firstName, lastName);
 
         decimal monthlySalary = GetMonthlySalary(firstName, lastName); 
         
-        //Console.Clear(); 
-        //Console.WriteLine($"{firstName} {lastName} with ID {iD} will start on {startDate.ToString()} with the salary {monthlySalary.ToString()} SEK");
         string query = @"INSERT INTO Staff (FirstName, LastName, StaffRoleID, DateHired, SalaryMonthly) VALUES (@FirstName, @LastName, @StaffRoleID, @DateHired, @Salary)";
         
         ExceCuteAlterTableQueries(query, firstName, lastName, staffRoleId, startDate, monthlySalary);
@@ -251,7 +321,7 @@ public class ADOServices
         return true;
     }
 
-    public List<List<string>> GetMenuData(string query)
+    public List<List<string>> GetMenuDataFromSQL(string query)
     {
         var staffRoles = new List<List<string>> ();
         
@@ -265,14 +335,22 @@ public class ADOServices
             {
                 using (SqlDataReader reader = command.ExecuteReader())
                 {
-                    while (reader.Read())
+                    if (reader.HasRows)
                     {
-                        var staffRoleItem = new List<string>(); 
-                        for (int i = 0; i < reader.FieldCount; i++)
+                        while (reader.Read())
                         {
-                            staffRoleItem.Add(reader[i].ToString()); 
+                            var staffRoleItem = new List<string>();
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                staffRoleItem.Add(reader[i].ToString());
+                            }
+
+                            staffRoles.Add(staffRoleItem);
                         }
-                        staffRoles.Add(staffRoleItem);
+                    }
+                    else
+                    {
+                        Console.WriteLine("There is not data matching the request");
                     }
                 }
 
@@ -332,32 +410,31 @@ public class ADOServices
         return filteredDataList;
     }
 
-    public int FetchStaffRoleID(string firstName, string lastName)
+    public int FetchColumnID(string query, string topStatement)
     {
-        string query = @"SELECT * FROM StaffRoles";
+        //Get a List of string-arrays containing ID and a column of choice
+        var listIDAndInfo = GetMenuDataFromSQL(query);
         
-        //Get a List of string-arrays containing staff-roles and their ID
-        var staffRoles = GetMenuData(query);
-        
+        //Initiate a list to store menutems to use when running interactive menu
         List<string> menuItems = new List<string>(); 
         
         //Pick the role-names from the list of arrays to use for a menu.
-        foreach (var role in staffRoles)
+        foreach (var item in listIDAndInfo)
         {
-            menuItems.Add(role[1]);
+            menuItems.Add(item[1]);
         }
-        var menu = new Menubuilder(menuItems, $"What position will {firstName} {lastName} have?");
+        var menu = new Menubuilder(menuItems, topStatement);
         
-        string roleChosen = menu.Run();
+        string choice = menu.Run();
         
-        //A varialbe for storing the ID of the chosen role. 
+        //A varialbe for storing the ID of the choice 
         int iD = 0;
         
-        foreach (var role in staffRoles)
+        foreach (var item in listIDAndInfo)
         {
-            if (roleChosen == role[1])
+            if (choice == item[1])
             {
-                int.TryParse(role[0], out iD); 
+                int.TryParse(item[0], out iD); 
             }
         }
 

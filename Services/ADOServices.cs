@@ -17,6 +17,8 @@ public class ADOServices
     
     private void ExecuteShowQueries(string query, int padding, int? parameter)
     {
+        Console.Clear();
+        
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
             connection.Open();
@@ -36,15 +38,27 @@ public class ADOServices
                     {
                         if (reader.HasRows)
                         {
+                            // lines counts all words and spacing when the heading is printed, in order to print a line
+                            // under with a good nice looking length
+                            int lines = 0;
+                            
+                            // a for-loop for the column headings/names
                             for (int i = 0; i < reader.FieldCount; i++)
                             {
                                 Console.Write(reader.GetName(i).PadRight(padding));
+                                lines += reader.GetName(i).PadRight(padding).Length;
+                            }
+                            Console.WriteLine();
+                            
+                            // adding a line under the column headings
+                            for (int i = 0; i < lines; i++)
+                            {
+                                Console.Write("-");
                             }
 
                             Console.WriteLine();
-                            Console.WriteLine(
-                                "---------------------------------------------------------------------------");
-
+                            
+                            // a while loop running as long as there are rows left to read in the reader
                             while (reader.Read())
                             {
                                 for (int i = 0; i < reader.FieldCount; i++)
@@ -67,43 +81,11 @@ public class ADOServices
             }
         }
     }
-
-    public void ExceCuteAlterTableQueries(string query, string firstName, string lastName, int staffRoleId, 
-        DateTime dateStartPosition, decimal salary)
-    {
-        try
-        {
-            Console.Clear();
-            using (SqlConnection connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
-
-                using (SqlCommand command = new SqlCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@FirstName", firstName);
-                    command.Parameters.AddWithValue("@LastName", lastName); 
-                    command.Parameters.AddWithValue("@StaffRoleID", staffRoleId);
-                    command.Parameters.AddWithValue("@DateHired", dateStartPosition);
-                    command.Parameters.AddWithValue("@Salary", salary);
-                
-                    var rowsAffected = command.ExecuteNonQuery();
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
-        finally
-        {
-            Console.WriteLine("Operation completed.");
-        }
-    }
-
-
-    //Skolan vill kunna ta fram en översikt över all personal där det framgår namn och vilka befattningar de har samt
-    //hur många år de har arbetat på skolan. Administratören vill också ha möjlighet att spara ner ny personal. (SQL via ADO.Net)
+    
+    /// <summary>
+    /// Method for printing out an overview of all staff to the console.
+    /// </summary>
+    /// <returns></returns>
     public bool ShowStaff()
     {
         Console.Clear();
@@ -113,17 +95,25 @@ public class ADOServices
         Console.WriteLine("All Staff");
         Console.WriteLine("---------------------------------------------------------------------------");
         
-        string query = $"SELECT \ns.LastName AS 'Last name',\ns.FirstName AS 'First name',\nr.StaffRoleName AS " +
-                       "'Position/Role',\nDATEDIFF(YEAR, DateHired, GETDATE()) AS 'YearsEmployed'\nFROM Staff s\nJOIN " +
-                       "StaffRoles r ON s.StaffRoleID = r.ID\nORDER BY 'Last name'";
+        string query = $"SELECT "+
+                       "s.LastName AS 'Last name', "+
+                       "s.FirstName AS 'First name', "+
+                       "r.StaffRoleName AS 'Position/Role', "+
+                       "DATEDIFF(YEAR, DateHired, "+
+                       "GETDATE()) AS 'YearsEmployed' "+
+                       "FROM Staff s "+
+                       "JOIN StaffRoles r ON s.StaffRoleID = r.ID "+
+                       "ORDER BY 'Last name'";
         
         ExecuteShowQueries(query, 20, null);
 
         return true;
     }
     
-    //Skapa en Stored Procedure som tar emot ett Id och returnerar viktig information om den elev som är registrerad med aktuellt Id. (SQL via ADO.Net)
-    //1. Visa information om en elev, vilken klass hen tillhör och vilken/vilka lärare hen har samt vilka betyg hen har fått i en specifik kurs. (SQL via ADO.Net)
+    /// <summary>
+    /// A method that uses a stored procedure to print out data of a specifc student to the console.
+    /// </summary>
+    /// <returns>true</returns>
     public bool ShowSpecificStudent()
     {
         Console.WriteLine("Search for student!");
@@ -137,13 +127,16 @@ public class ADOServices
         {
             Console.Clear();
             string query = @"EXEC ShowStudent @parameter";
-            //List<string> headings = new List<string>() { "Name", "Personal number", "Grade", "Mentor" };
             
             ExecuteShowQueries(query, 20, studentID);
         }
         return true;
     } 
    
+    /// <summary>
+    /// A method that shows all the grades of a student
+    /// </summary>
+    /// <returns>true</returns>
     public bool ShowGradesPerStudent()
     {
         Console.Clear();
@@ -158,13 +151,19 @@ public class ADOServices
 
         if (studentID != -1)
         {
-            string query = @"SELECT c.CourseName as 'Course',g2.GradingScale as 'Grade',g1.DateSetGrade as 'Date when set',"+
-                           "s1.FirstName + ' ' + s1.LastName as 'Teacher'FROM Grades g1 JOIN Courses c ON g1.CourseID = c.ID "+
-                           "JOIN CourseTeacher ct on ct.CourseID = c.ID JOIN Staff s1 ON ct.TeacherID = s1.ID "+
-                           "JOIN GradingScales g2 ON g1.GradingScale_ID = g2.ID JOIN Students s2 ON s2.ID = g1.StudentID "+
+            string query = @"SELECT "+
+                           "c.CourseName as 'Course',"+
+                           "g2.GradingScale as 'Grade',"+
+                           "CONVERT(varchar, g1.DateSetGrade, 23) as 'Date when set',"+
+                           "g1.FinalGrades as 'Final?', "+
+                           "s1.FirstName + ' ' + s1.LastName as 'Teacher'"+
+                           "FROM Grades g1 "+
+                           "JOIN Courses c ON g1.CourseID = c.ID "+
+                           "JOIN CourseTeacher ct on ct.CourseID = c.ID "+
+                           "JOIN Staff s1 ON ct.TeacherID = s1.ID "+
+                           "JOIN GradingScales g2 ON g1.GradingScale_ID = g2.ID "+
+                           "JOIN Students s2 ON s2.ID = g1.StudentID "+
                            "WHERE s2.ID = @parameter";
-
-            //var headings = new List<string>() { "Course", "Grade", "Date when set", "Teacher" };
             
             ExecuteShowQueries(query, 20, studentID);
         }
@@ -203,7 +202,11 @@ public class ADOServices
         return true;
     }
     
-    //Sätt betyg på en elev genom att använda Transactions ifall något går fel. (SQL via ADO.Net)
+    /// <summary>
+    /// A method for setting grades. Uses a stored procedure, including transaction to make sure everything is rolled
+    /// back if not followed through
+    /// </summary>
+    /// <returns></returns>
     public bool SetCourseGrades()
     {
         Console.Clear();
@@ -281,16 +284,10 @@ public class ADOServices
         return true;
     }
     
-    //2. Skapa en View som visar alla lärare och vilka utbildningar de ansvarar för. (SQL via ADO.Net)
-    public bool ShowAllTeachersAndTheirCourses()
-    {
-        Console.Clear();
-        Console.WriteLine("All teachers and their courses");
-
-        return true;
-    }
-    
-    //Administratören vill också ha möjlighet att spara ner ny personal. (SQL via ADO.Net)
+    /// <summary>
+    /// A method for adding new staff. Used by the admin
+    /// </summary>
+    /// <returns></returns>
     public bool AddNewStaff()
     {
         Console.Clear();
@@ -314,10 +311,38 @@ public class ADOServices
 
         decimal monthlySalary = GetMonthlySalary(firstName, lastName); 
         
-        string query = @"INSERT INTO Staff (FirstName, LastName, StaffRoleID, DateHired, SalaryMonthly) VALUES (@FirstName, @LastName, @StaffRoleID, @DateHired, @Salary)";
+        string query = @"INSERT INTO Staff (FirstName, LastName, StaffRoleID, DateHired, SalaryMonthly) "+
+                       "VALUES "+
+                       "(@FirstName, @LastName, @StaffRoleID, @DateHired, @Salary)";
         
-        ExceCuteAlterTableQueries(query, firstName, lastName, staffRoleId, startDate, monthlySalary);
-        
+        try
+        {
+            Console.Clear();
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@FirstName", firstName);
+                    command.Parameters.AddWithValue("@LastName", lastName); 
+                    command.Parameters.AddWithValue("@StaffRoleID", staffRoleId);
+                    command.Parameters.AddWithValue("@DateHired", startDate);
+                    command.Parameters.AddWithValue("@Salary", monthlySalary);
+                
+                    var rowsAffected = command.ExecuteNonQuery();
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        finally
+        {
+            Console.WriteLine("Operation completed.");
+        }
         return true;
     }
 
@@ -415,7 +440,7 @@ public class ADOServices
         //Get a List of string-arrays containing ID and a column of choice
         var listIDAndInfo = GetMenuDataFromSQL(query);
         
-        //Initiate a list to store menutems to use when running interactive menu
+        //Initiate a list to store menu-items to use when running interactive menu
         List<string> menuItems = new List<string>(); 
         
         //Pick the role-names from the list of arrays to use for a menu.
@@ -427,9 +452,10 @@ public class ADOServices
         
         string choice = menu.Run();
         
-        //A varialbe for storing the ID of the choice 
+        //A varialbe for storing the ID of the chosen item
         int iD = 0;
         
+        // matches the chosen item to list containing also IDs
         foreach (var item in listIDAndInfo)
         {
             if (choice == item[1])
@@ -597,23 +623,5 @@ public class ADOServices
             }
         }
         return monthlySalary;
-    }
-
-    /// <summary>
-    /// NOT in use currently
-    /// </summary>
-    /// <param name="originalStr"></param>
-    /// <returns></returns>
-    public string SplitString(string originalStr)
-    {
-        // Split the string in year, month and day
-        string year = originalStr.Substring(0, 4);
-        string month = originalStr.Substring(4, 2);
-        string day = originalStr.Substring(6, 2);
-        
-        // Put it all togeher again
-        string formatedStr = $"{year}-{month}-{day}";
-
-        return formatedStr;
     }
 }

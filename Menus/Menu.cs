@@ -116,7 +116,6 @@ public class Menu
         var menuItems= new Dictionary<string, _menuAction>
         {
             { "All our active course", _efServices.ShowAllActiveCourses },
-            { "All teachers and their courses", _adoServices.ShowAllTeachersAndTheirCourses },
             { "Return to start menu", EndMenuLoop },
         };
              

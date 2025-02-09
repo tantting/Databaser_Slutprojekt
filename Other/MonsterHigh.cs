@@ -22,16 +22,17 @@ public class MonsterHigh
     }
     
     /// <summary>
-    /// A login method that I most likely will not have time to do)
+    /// A login method that I most likely will not have time to do.
     /// </summary>
     /// <returns>true om login succeeds</returns>
     public bool Login()
     {
         Console.Clear();
-        Console.WriteLine("Det är nu som du loggar in men jag hann inte dit om du ser detta. Så inloggningen" +
-                          "lyckades mao och du har access till ALLT! Grattis :)\n" +
+        Console.WriteLine("This is the log-in view. If you read this text, I did not have time to finalise it. Good for" +
+                          "you - that means that your login attempt will succeed and you will have access to EVERYTHNG!" +
+                          "Congrats! :D \n" +
                           "\n" +
-                          "Tryck enter för att fortsätta");
+                          "Press enter to continue");
         while (Console.ReadKey(true).Key != ConsoleKey.Enter) { }
         
         return true; 

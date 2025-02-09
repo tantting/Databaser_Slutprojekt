@@ -29,9 +29,14 @@ public class Menubuilder
         {
             Console.Clear();
 
-            Console.WriteLine($"{_topStatement}\n" +
-                              $"-----------------------------");
+            Console.WriteLine($"{_topStatement}");
             
+            for (int i = 0; i < _topStatement.Length; i++)
+            {
+                Console.Write("-");
+            }
+            Console.WriteLine();
+
             for (int i = 0; i < _menuItems.Count; i++)
             {
                 if (i == currentSelection)

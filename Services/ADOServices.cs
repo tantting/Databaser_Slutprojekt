@@ -36,14 +36,22 @@ public class ADOServices
                     {
                         if (reader.HasRows)
                         {
+                            int lines = 0;
                             for (int i = 0; i < reader.FieldCount; i++)
                             {
                                 Console.Write(reader.GetName(i).PadRight(padding));
+                                lines += reader.GetName(i).PadRight(padding).Length;
+                            }
+                            Console.WriteLine();
+                            
+                            for (int i = 0; i < lines; i++)
+                            {
+                                Console.Write("-");
                             }
 
-                            Console.WriteLine();
-                            Console.WriteLine(
-                                "---------------------------------------------------------------------------");
+                            
+                            //Console.WriteLine(
+                              //  "---------------------------------------------------------------------------");
 
                             while (reader.Read())
                             {
@@ -158,10 +166,18 @@ public class ADOServices
 
         if (studentID != -1)
         {
-            string query = @"SELECT c.CourseName as 'Course',g2.GradingScale as 'Grade',g1.DateSetGrade as 'Date when set',"+
-                           "s1.FirstName + ' ' + s1.LastName as 'Teacher'FROM Grades g1 JOIN Courses c ON g1.CourseID = c.ID "+
-                           "JOIN CourseTeacher ct on ct.CourseID = c.ID JOIN Staff s1 ON ct.TeacherID = s1.ID "+
-                           "JOIN GradingScales g2 ON g1.GradingScale_ID = g2.ID JOIN Students s2 ON s2.ID = g1.StudentID "+
+            string query = @"SELECT "+
+                           "c.CourseName as 'Course',"+
+                           "g2.GradingScale as 'Grade',"+
+                           "CONVERT(varchar, g1.DateSetGrade, 23) as 'Date when set',"+
+                           "g1.FinalGrades as 'FinalGrades', "+
+                           "s1.FirstName + ' ' + s1.LastName as 'Teacher'"+
+                           "FROM Grades g1 "+
+                           "JOIN Courses c ON g1.CourseID = c.ID "+
+                           "JOIN CourseTeacher ct on ct.CourseID = c.ID "+
+                           "JOIN Staff s1 ON ct.TeacherID = s1.ID "+
+                           "JOIN GradingScales g2 ON g1.GradingScale_ID = g2.ID "+
+                           "JOIN Students s2 ON s2.ID = g1.StudentID "+
                            "WHERE s2.ID = @parameter";
 
             //var headings = new List<string>() { "Course", "Grade", "Date when set", "Teacher" };

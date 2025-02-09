@@ -8,20 +8,26 @@ namespace Databaser_Slutprojekt.Services;
 
 public class EFServices
 {
-    //Lista alla avdelningar inkl namn, chef och antalet medarbetare på avdelning. Om tid, möjloggör att klicka sig vidare
-    //för att se vilka medarbetare som jobbar var.
+    /// <summary>
+    /// List all departments, inkluding names, manager, number employees. de
+    /// </summary>
+    /// <returns>true</returns>
     public bool ShowDepartments()
     {
         Console.Clear();
         Console.WriteLine("All Departments:");
         Console.WriteLine("------------------\n");
         
+        //USe the menu-builder to present sorting options for the user. 
         var menuItems = new List<string> {"Ascending", "Descending"};
         var menu = new Menubuilder(menuItems, "How would you like to order the Departments? By...");
         string orderBy = menu.Run();
         
+        //Create a new instance of MyDbContext to access the table representations (DbSet) in the database.
         using (var context = new MyDbContext())
         {
+            //In the SELECT, the type of the IQueryable becomes anonymous, holding the specific vales from including
+            //additional tables.  
             var departments = context.Departments
                 .Include(d => d.Staff)
                 .Include(d => d.Manager)
@@ -31,7 +37,8 @@ public class EFServices
                     Manager = d.Manager.FirstName + " " + d.Manager.LastName,
                     NumberOfCoWorkers = d.Staff.Count
                 });
-
+            
+            //I need sortedQuery to be IQueryable in order to use a ternary operator on it
             IQueryable<dynamic> sortedQuery = context.Departments; 
             
             sortedQuery = (orderBy == "Ascending") ? departments.OrderBy(d => d.DepartmentName):
@@ -41,6 +48,7 @@ public class EFServices
 
             if (sortedList.Count() != 0)
             {
+                //My format for column sizes in my WriteLines. 
                 const string format = "{0,-40} {1,-20} {2, -10}";
                 Console.Clear();
                 Console.WriteLine("All Departments:" +
@@ -59,6 +67,10 @@ public class EFServices
         return true;
     }
     
+    /// <summary>
+    /// Show all classes 
+    /// </summary>
+    /// <returns>true</returns>
     public bool ShowClasses()
     {
         Console.Clear();
@@ -95,7 +107,11 @@ public class EFServices
 
         return true;
     }
-    //Visa information om alla elever (t.ex namn, klass och annat som är intressant/relevant i din databas) (EF)
+    
+    /// <summary>
+    /// Show information of all students, including name, class etc. 
+    /// </summary>
+    /// <returns>true</returns>
     public bool ShowAllStudents()
     {
         Console.Clear();
@@ -123,8 +139,6 @@ public class EFServices
                     Grade = s.Class.Grade,
                     Mentor = s.Class.Mentor.FirstName + " " + s.Class.Mentor.LastName
                 });
-            
-            // Jag kan göra en foreach här men inte efter min sortering...
 
             IQueryable<dynamic> sortedStudents = context.Students;
 
@@ -168,7 +182,10 @@ public class EFServices
         return true;
     }
 
-    //Visa en lista på alla aktiva kurser (EF)
+        /// <summary>
+        /// Show a lst of all active courses. 
+        /// </summary>
+        /// <returns>true</returns>
         public bool ShowAllActiveCourses()
         {
             Console.Clear();

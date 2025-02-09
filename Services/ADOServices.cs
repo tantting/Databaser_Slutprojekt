@@ -281,15 +281,6 @@ public class ADOServices
         return true;
     }
     
-    //2. Skapa en View som visar alla lärare och vilka utbildningar de ansvarar för. (SQL via ADO.Net)
-    public bool ShowAllTeachersAndTheirCourses()
-    {
-        Console.Clear();
-        Console.WriteLine("All teachers and their courses");
-
-        return true;
-    }
-    
     //Administratören vill också ha möjlighet att spara ner ny personal. (SQL via ADO.Net)
     public bool AddNewStaff()
     {

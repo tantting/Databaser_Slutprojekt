@@ -28,9 +28,9 @@ public class MonsterHigh
     public bool Login()
     {
         Console.Clear();
-        Console.WriteLine("This is the log-in view. If you read this text, I did not have time to finalise it. Good for" +
+        Console.WriteLine("This is the log-in view. If you read this text, I did not have time to finalise it. Good for " +
                           "you - that means that your login attempt will succeed and you will have access to EVERYTHNG!" +
-                          "Congrats! :D \n" +
+                          " Congrats! :D \n" +
                           "\n" +
                           "Press enter to continue");
         while (Console.ReadKey(true).Key != ConsoleKey.Enter) { }

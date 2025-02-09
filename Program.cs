@@ -7,7 +7,7 @@ class Program
 {
     static void Main(string[] args)
     {
-        //ConnectionString: Server=localhost,1433;Database=MonsterHighDB; User = SA; Password = MyStrongPass123; Trust Server Certificate = true
+        // An instance of MonsterHigh is initiated in order to run the program
         var monsterHigh = new MonsterHigh(); 
         monsterHigh.Run();
     }

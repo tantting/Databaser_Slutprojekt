@@ -1,6 +1,9 @@
+using System.Diagnostics;
 using System.Globalization;
+using System.Linq.Expressions;
 using Databaser_Slutprojekt.Menus;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace Databaser_Slutprojekt.Services;
 
@@ -11,42 +14,56 @@ public class ADOServices
     private readonly string _connectionString =
         @"Server=localhost,1433;Database=MonsterHighDB; User = SA; Password = MyStrongPass123; Trust Server Certificate = true";
     
-   
-    //const string format = "{0,-15} {1,-15} {2,-15} {3,-15} {4, -20}";
-    private void ExcecuteQueries(string query, int padding, List<string> headings)
+    
+    private void ExecuteShowQueries(string query, int padding, int? parameter)
     {
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
             connection.Open();
 
-            SqlCommand command = new SqlCommand(query, connection);
-
-            try
+            using (SqlCommand command = new SqlCommand(query, connection))
             {
-                using (SqlDataReader reader = command.ExecuteReader())
+                //if there is a parameter to handle in the method call
+                if (parameter.HasValue)
                 {
-                    for (int i = 0; i < headings.Count; i++)
-                    {
-                        Console.Write(headings[i].PadRight(padding));
-                    }
-                    Console.WriteLine();
-                    Console.WriteLine("---------------------------------------------------------------------------");
-                    
-                    while (reader.Read())
-                    {
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            Console.Write(reader[i].ToString().PadRight(padding));
-                        }
-                        Console.WriteLine();
-                    }
+                    // Add the parameter with entered value
+                    command.Parameters.AddWithValue("@parameter", parameter);
                 }
 
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
+                try
+                {
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        if (reader.HasRows)
+                        {
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                Console.Write(reader.GetName(i).PadRight(padding));
+                            }
+
+                            Console.WriteLine();
+                            Console.WriteLine(
+                                "---------------------------------------------------------------------------");
+
+                            while (reader.Read())
+                            {
+                                for (int i = 0; i < reader.FieldCount; i++)
+                                {
+                                    Console.Write(reader[i].ToString().PadRight(padding));
+                                }
+                                Console.WriteLine();
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("There are no data matching he request");
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
             }
         }
     }
@@ -81,8 +98,6 @@ public class ADOServices
         finally
         {
             Console.WriteLine("Operation completed.");
-            Console.WriteLine("\nPress enter to continue");
-            while (Console.ReadKey(true).Key != ConsoleKey.Enter) {}
         }
     }
 
@@ -102,9 +117,7 @@ public class ADOServices
                        "'Position/Role',\nDATEDIFF(YEAR, DateHired, GETDATE()) AS 'YearsEmployed'\nFROM Staff s\nJOIN " +
                        "StaffRoles r ON s.StaffRoleID = r.ID\nORDER BY 'Last name'";
         
-        var headings = new List<string>() { "Last name", "First name", "Position", "Years at School" };
-        
-        ExcecuteQueries(query, 20, headings);
+        ExecuteShowQueries(query, 20, null);
 
         return true;
     }
@@ -113,45 +126,79 @@ public class ADOServices
     //1. Visa information om en elev, vilken klass hen tillhör och vilken/vilka lärare hen har samt vilka betyg hen har fått i en specifik kurs. (SQL via ADO.Net)
     public bool ShowSpecificStudent()
     {
-        Console.Clear();
-        Console.WriteLine("Search for student / stored procedure");
+        Console.WriteLine("Search for student!");
+        Console.WriteLine("-------------------");
 
-        Console.WriteLine("Wish to Update info? Admin only");
+        int studentID = 0;
+        
+        studentID = FetchStudentID();
 
+        if (studentID != -1)
+        {
+            Console.Clear();
+            string query = @"EXEC ShowStudent @parameter";
+            //List<string> headings = new List<string>() { "Name", "Personal number", "Grade", "Mentor" };
+            
+            ExecuteShowQueries(query, 20, studentID);
+        }
         return true;
     } 
    
     public bool ShowGradesPerStudent()
     {
-        //Vi vill kunna ta fram alla betyg för en elev i varje kurs/ämne de läst och vi vill kunna se vilken
-        //lärare som satt betygen, vi vill också se vilka datum betygen satts. (SQL via ADO.Net)
         Console.Clear();
-        Console.WriteLine("Grades per student");
+        Console.WriteLine("Grades per student:");
+        Console.WriteLine("--------------------");
+        
+        int studentID = 0;
+        
+        studentID = FetchStudentID();
 
+        Console.WriteLine(studentID);
+
+        if (studentID != -1)
+        {
+            string query = @"SELECT c.CourseName as 'Course',g2.GradingScale as 'Grade',g1.DateSetGrade as 'Date when set',"+
+                           "s1.FirstName + ' ' + s1.LastName as 'Teacher'FROM Grades g1 JOIN Courses c ON g1.CourseID = c.ID "+
+                           "JOIN CourseTeacher ct on ct.CourseID = c.ID JOIN Staff s1 ON ct.TeacherID = s1.ID "+
+                           "JOIN GradingScales g2 ON g1.GradingScale_ID = g2.ID JOIN Students s2 ON s2.ID = g1.StudentID "+
+                           "WHERE s2.ID = @parameter";
+
+            //var headings = new List<string>() { "Course", "Grade", "Date when set", "Teacher" };
+            
+            ExecuteShowQueries(query, 20, studentID);
+        }
         return true;
     }
     
-    
-    public bool ShowSalaryTotalYear()
+    public bool ShowMonthlySalaryCostDepartment()
     {
         Console.Clear();
-        Console.WriteLine("Total salary cost ");
+        Console.WriteLine("MONTHLY SALARY COST PER DEPARTMENT\n");
 
-        return true;
-    }
-    
-    public bool ShowAvgSalaryTotal()
-    {
-        Console.Clear();
-        Console.WriteLine("Avg salar of all staff ");
-
+        string query = @"SELECT d.DepartmentName AS 'Department name', 
+                        SUM(s.SalaryMonthly) AS 'Total monthly salary cost' "+
+                       "FROM Departments d "+
+                       "JOIN DepartmentsStaff ds ON d.ID = ds.DepartmentID "+
+                       "JOIN Staff s ON s.ID = ds.StaffID GROUP BY d.DepartmentName";
+        
+        ExecuteShowQueries(query, 40, null);
+        
         return true;
     }
     
     public bool ShowAvgSalaryPerDepartment()
     {
         Console.Clear();
-        Console.WriteLine("Avg salar per department");
+        Console.WriteLine("AVERAGE SALARY PER DEPARTMENT\n");
+        
+        string query = @"SELECT d.DepartmentName AS 'Department name', 
+                        AVG(s.SalaryMonthly) AS 'Average monthly salary' "+
+                       "FROM Departments d "+
+                       "JOIN DepartmentsStaff ds ON d.ID = ds.DepartmentID "+
+                       "JOIN Staff s ON s.ID = ds.StaffID GROUP BY d.DepartmentName";
+        
+        ExecuteShowQueries(query, 40, null);
 
         return true;
     }
@@ -160,8 +207,77 @@ public class ADOServices
     public bool SetCourseGrades()
     {
         Console.Clear();
-        Console.WriteLine("set student grades");
+        Console.WriteLine("SET COURSE GRADES\n");
+    
+        //Start by fetching the ID of the teacher setting the grades
+        string queryTeacherID = @"SELECT ID AS 'ID', FirstName + ' ' + LastName AS Name FROM Staff";
+        string headingTeacherID = "Which teacher is setting the grade?\n";
+        int gradeSetTeacherID = FetchColumnID(queryTeacherID, headingTeacherID);
+    
+        //Fetch student ID
+        int studentID = FetchStudentID();
+    
+        //Fetch course ID
+        string queryCourseID = @"SELECT ID AS 'ID',CourseName AS Course FROM Courses";
+        string headingCourseID = "Choose relevant course: \n";
+        int courseID = FetchColumnID(queryCourseID, headingCourseID);
+    
+        //Fetch gradingScaleID
+        string queryGradeScaleID =  @"SELECT ID AS 'ID',GradingScale AS Grade FROM GradingScales";
+        string headingGradeScaleID = "Choose relevant grade: \n";
+        int gradingScaleID = FetchColumnID(queryGradeScaleID, headingGradeScaleID);
+    
+        var menuItems = new List<string>() {"Yes", "No"};
+        var menu = new Menubuilder(menuItems, "Is this a fina/n Answer Yes is final, No if intermediate");
+        
+        string choice = menu.Run();
+    
+        //finalGRades = treu is equal to 1 on bit
+        bool finalGrades = true;
+    
+        if (choice == "Yes")
+        {
+            finalGrades = true; 
+        }
+        else
+        {
+            finalGrades = false; 
+        }
 
+        Console.WriteLine($"Student = {studentID} Teacher {gradeSetTeacherID} Course= {courseID} grade= {gradingScaleID} final= {finalGrades}");
+        Console.ReadLine();
+    
+        string mainQuery = $@"EXEC SetGrades @StudentID, @GradeSetTeacherID, "+
+                           $"@CourseID, @GradingScaleID, @FinalGrades";
+        try
+        {
+            Console.Clear();
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+    
+                using (SqlCommand command = new SqlCommand(mainQuery, connection))
+                {
+                    command.Parameters.AddWithValue("@StudentID", studentID);
+                    command.Parameters.AddWithValue("@GradeSetTeacherID", gradeSetTeacherID);
+                    command.Parameters.AddWithValue("@CourseID", courseID);
+                    command.Parameters.AddWithValue("@GradingScaleID", gradingScaleID);
+                    command.Parameters.AddWithValue("@FinalGrades", finalGrades); 
+
+                    var rowsAffected = command.ExecuteNonQuery();
+                    Console.WriteLine($"{rowsAffected} grade is now changed");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        finally
+        {
+            Console.WriteLine("Operation completed.");
+        }
         return true;
     }
     
@@ -179,24 +295,25 @@ public class ADOServices
     {
         Console.Clear();
         Console.WriteLine("Add new staff");
+        Console.WriteLine("--------------------------------");
 
-        Console.WriteLine("Please enter the following data:");
+        Console.WriteLine("\nPlease enter the following data:\n");
 
         Console.Write("First name: ");
         string firstName = Console.ReadLine();
 
         Console.Write("Last name: ");
         string lastName = Console.ReadLine();
-        
 
-        int staffRoleId = FetchRoleID(firstName, lastName);
+        string getIDquery = @"SELECT * FROM StaffRoles";
+        string topStatementMenu = $"What position will {firstName} {lastName} have?";
+            
+        int staffRoleId = FetchColumnID(getIDquery, topStatementMenu);
 
         DateTime startDate = GetStartDate(firstName, lastName);
 
         decimal monthlySalary = GetMonthlySalary(firstName, lastName); 
         
-        //Console.Clear(); 
-        //Console.WriteLine($"{firstName} {lastName} with ID {iD} will start on {startDate.ToString()} with the salary {monthlySalary.ToString()} SEK");
         string query = @"INSERT INTO Staff (FirstName, LastName, StaffRoleID, DateHired, SalaryMonthly) VALUES (@FirstName, @LastName, @StaffRoleID, @DateHired, @Salary)";
         
         ExceCuteAlterTableQueries(query, firstName, lastName, staffRoleId, startDate, monthlySalary);
@@ -204,11 +321,9 @@ public class ADOServices
         return true;
     }
 
-    public List<string[]> GetMenuData()
+    public List<List<string>> GetMenuDataFromSQL(string query)
     {
-        var staffRoles = new List<string[]> ();
-        
-        string query = @"SELECT * FROM StaffRoles";
+        var staffRoles = new List<List<string>> ();
         
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
@@ -220,14 +335,22 @@ public class ADOServices
             {
                 using (SqlDataReader reader = command.ExecuteReader())
                 {
-                    while (reader.Read())
+                    if (reader.HasRows)
                     {
-                        var staffRoleItem = new string[2]; 
-                        for (int i = 0; i < reader.FieldCount; i++)
+                        while (reader.Read())
                         {
-                            staffRoleItem[i] = reader[i].ToString(); 
+                            var staffRoleItem = new List<string>();
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                staffRoleItem.Add(reader[i].ToString());
+                            }
+
+                            staffRoles.Add(staffRoleItem);
                         }
-                        staffRoles.Add(staffRoleItem);
+                    }
+                    else
+                    {
+                        Console.WriteLine("There is not data matching the request");
                     }
                 }
 
@@ -240,35 +363,170 @@ public class ADOServices
         }
         return staffRoles;
     }
-
-    public int FetchID(string firstName, string lastName)
+    
+    public List<List<string>> GetFilteredData(string query, string parameter)
     {
-        //Get a List of string-arrays containing staff-roles and their ID
-        var staffRoles = GetMenuData();
+        var filteredDataList = new List<List<string>> ();
+        
+        using (SqlConnection connection = new SqlConnection(_connectionString))
+        {
+            connection.Open();
 
+            SqlCommand command = new SqlCommand(query, connection);
+            
+            try
+            {
+                // Add the parameter with entered value
+                command.Parameters.AddWithValue("@parameter", parameter);
+
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            var staffRoleItem = new List<string>();
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                staffRoleItem.Add(reader[i].ToString());
+                            }
+
+                            filteredDataList.Add(staffRoleItem);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("No data found for the given parameter");
+                    }
+                }
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+        return filteredDataList;
+    }
+
+    public int FetchColumnID(string query, string topStatement)
+    {
+        //Get a List of string-arrays containing ID and a column of choice
+        var listIDAndInfo = GetMenuDataFromSQL(query);
+        
+        //Initiate a list to store menutems to use when running interactive menu
         List<string> menuItems = new List<string>(); 
         
         //Pick the role-names from the list of arrays to use for a menu.
-        foreach (var role in staffRoles)
+        foreach (var item in listIDAndInfo)
         {
-            menuItems.Add(role[1]);
+            menuItems.Add(item[1]);
         }
-        var menu = new Menubuilder(menuItems, $"What position will {firstName} {lastName} have?");
+        var menu = new Menubuilder(menuItems, topStatement);
         
-        string roleChosen = menu.Run();
+        string choice = menu.Run();
         
-        //A varialbe for storing the ID of the chosen role. 
+        //A varialbe for storing the ID of the choice 
         int iD = 0;
         
-        foreach (var role in staffRoles)
+        foreach (var item in listIDAndInfo)
         {
-            if (roleChosen == role[1])
+            if (choice == item[1])
             {
-                int.TryParse(role[0], out iD); 
+                int.TryParse(item[0], out iD); 
             }
         }
 
         return iD; 
+    }
+    
+    public int FetchStudentID()
+    {
+        bool runLoop = true;
+        int studentId = -1; 
+
+        while (runLoop)
+        {
+            string topStatementSearch = $"By what would you like to search for the students?";
+            var menuItemsSearch = new List<string>() { "First name", "Last name", "Exit" };
+            var menuSearch = new Menubuilder(menuItemsSearch, topStatementSearch);
+
+            string query = "";
+            string searchTerm = menuSearch.Run();
+            string parameter = "";
+
+            if (searchTerm != "Exit")
+            {
+                Console.Clear();
+                Console.WriteLine($"Enter a {searchTerm}: ");
+                parameter = Console.ReadLine();
+            }
+
+            bool exit = false; 
+
+            switch (searchTerm)
+            {
+                case "First name":
+                    query = @"SELECT ID, LastName, FirstNAme, PersonalNumber FROM Students WHERE FirstName = @parameter";
+                    break;
+                case "Last name":
+                    query = @"SELECT ID, LastName, FirstNAme, PersonalNumber FROM Students WHERE LastName = @parameter";
+                    break;
+                case "Exit":
+                    exit = true;
+                    runLoop = false;
+                    break;
+            }
+
+            if (exit != true)
+            {
+                //Get a List of string-arrays containing staff-roles and their ID
+                var filteredStudents = GetFilteredData(query, parameter);
+
+                List<string> menuItems = new List<string>();
+
+                //Pick the role-names from the list of arrays to use for a menu.
+                for (int i = 0; i < filteredStudents.Count; i++)
+                {
+                    string studentItem = "";
+                    for (int j = 0; j < filteredStudents[i].Count; j++)
+                    {
+                        studentItem = studentItem + "  " + filteredStudents[i][j];
+                    }
+
+                    menuItems.Add(studentItem);
+                }
+
+                if (menuItems.Count != 0)
+                {
+                    var menu = new Menubuilder(menuItems, $"Which student are you searching for?");
+
+                    string selectedStudent = menu.Run();
+
+                    if (selectedStudent != "Exit")
+                    {
+                        for (int i = 0; i < menuItems.Count; i++)
+                        {
+                            if (selectedStudent == menuItems[i])
+                            {
+                                bool parseString = Int32.TryParse(filteredStudents[i][0], out studentId);
+                                runLoop = false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        runLoop = false;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Therer are no students matching the search term");
+                }
+            }
+        }
+        return studentId; 
     }
 
     public DateTime GetStartDate(string firstName, string lastName)
@@ -339,11 +597,6 @@ public class ADOServices
             }
         }
         return monthlySalary;
-    }
-
-    public decimal GetStudentID()
-    {
-        
     }
 
     /// <summary>

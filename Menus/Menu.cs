@@ -5,11 +5,16 @@ namespace Databaser_Slutprojekt.Menus;
 
 public class Menu
 {
+    //introduce a delegate variable that will be used to present menues to user and to connect menu choice with methods.
     private delegate bool _menuAction();
 
+    //need objects of EFServices and ADOServices in order to get to all database-related queries. 
     private EFServices _efServices = new EFServices();
     private ADOServices _adoServices = new ADOServices();
     
+    /// <summary>
+    /// A method for running the first startmenu.
+    /// </summary>
     public void Run()
     {
         var menuItems= new Dictionary<string, _menuAction>
@@ -26,10 +31,14 @@ public class Menu
 
         while (runMenu)
         {
+            //menuKeys holds the Keys in the menuItems, dictionary. 
             var menuKeys = new List<string>(menuItems.Keys);
+            
+            //topStatement is the heading of the menu. 
             var menu = new Menubuilder(menuKeys, "What would you like to access?");
             
-            //The EndProgram-method returns false, all other true. d
+            //The method EndMenuLoop returns runMenu = false, all other meny-methods
+            //returns true. 
             runMenu = menuItems[menu.Run()](); 
         }
         Console.Clear();
@@ -57,10 +66,12 @@ public class Menu
              {
                  var menuKeys = new List<string>(menuItems.Keys);
                  var menu = new Menubuilder(menuKeys, "What would you like to see?");
-                 
-                 //The EndProgram-method returns false, all other true. d
+                
+                 //The method EndMenuLoop returns runMenu = false, all other meny-methods
+                 // returns true. 
                  runMenu = menuItems[menu.Run()]();
 
+                 //If runMenu is false, the user can return straight back to the start meny. 
                  if (runMenu == true)
                  {
                      Console.WriteLine("\nPress enter to continue");
@@ -88,7 +99,7 @@ public class Menu
                 var menuKeys = new List<string>(menuItems.Keys);
                 var menu = new Menubuilder(menuKeys, "What would you like to see?");
                  
-                //The EndProgram-method returns false, all other true. d
+               
                 runMenu = menuItems[menu.Run()](); 
                 
                 if (runMenu == true)
@@ -116,7 +127,7 @@ public class Menu
             var menuKeys = new List<string>(menuItems.Keys);
             var menu = new Menubuilder(menuKeys, "What would you like to see?");
                  
-            //The EndProgram-method returns false, all other true. d
+            
             runMenu = menuItems[menu.Run()](); 
             
             if (runMenu == true)
@@ -132,7 +143,7 @@ public class Menu
     {
         var menuItems= new Dictionary<string, _menuAction>
         {
-            { "See grades of specific Student", _efServices.ShowAllActiveCourses },
+            { "See grades of specific Student", _adoServices.ShowGradesPerStudent },
             { "Set course grades", _adoServices.SetCourseGrades},
             { "Return to start menu", EndMenuLoop },
         };
@@ -144,7 +155,7 @@ public class Menu
             var menuKeys = new List<string>(menuItems.Keys);
             var menu = new Menubuilder(menuKeys, "What would you like to see?");
                  
-            //The EndProgram-method returns false, all other true. d
+            //"Return to start" returns false, the rest returns true.
             runMenu = menuItems[menu.Run()](); 
             
             if (runMenu == true)
@@ -159,8 +170,7 @@ public class Menu
     {
         var menuItems= new Dictionary<string, _menuAction>
         {
-            { "Yearly salary expenditures", _adoServices.ShowSalaryTotalYear },
-            { "Average salary for all staff", _adoServices.ShowAvgSalaryTotal },
+            { "Monthly salary cost per department", _adoServices.ShowMonthlySalaryCostDepartment },
             { "Average salary per department", _adoServices.ShowAvgSalaryPerDepartment },
             { "Return to start menu", EndMenuLoop },
         };
@@ -171,6 +181,7 @@ public class Menu
         {
             var menuKeys = new List<string>(menuItems.Keys);
             var menu = new Menubuilder(menuKeys, "What would you like to see?");
+            
             
             runMenu = menuItems[menu.Run()](); 
             
